@@ -79,8 +79,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>E:\Project\Lib\mysql-8.1.0-winx64\include;$(IncludePath)</IncludePath>
-    <LibraryPath>E:\Project\Lib\mysql-8.1.0-winx64\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>..\..\Lib\mysql-8.1.0-winx64\include;$(IncludePath)</IncludePath>
+    <LibraryPath>..\..\Lib\mysql-8.1.0-winx64\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
