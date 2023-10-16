@@ -1,0 +1,3 @@
+# Mysql
+该项目是对Mysql提供的C语言的API二次封装，参考教材来自Bilibili，仅供学习使用
+LXMysql是生成封装后的DLL工程，test_LXMysql是测试DLL功能项目
