@@ -57,6 +57,15 @@ namespace LX {
 		string GetUpdateSql(XDATA kv, string table,string where);
 		//返回更新数量 失败返回-1(修改非二进制数据)
 		int Update(XDATA kv, string table, string where);
+		//修改二进制数据
+		int UpdateBin(XDATA kv, string table, string where);
+
+		//事务接口
+		bool StartTransaction();
+		bool StopTransaction();
+		bool Commit();
+		bool Rollback();
+
 	protected:
 		MYSQL* mysql = 0;
 		MYSQL_RES* result = 0;

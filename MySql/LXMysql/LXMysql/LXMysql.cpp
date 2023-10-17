@@ -213,9 +213,8 @@ namespace LX {
 		for (auto ptr = kv.begin(); ptr != kv.end(); ptr++) {
 			keys += "`";
 			keys += ptr->first;
-			keys += "`,";
 
-			vals += "?,";
+			vals += "`=?,";
 			bind[i].buffer = (char*)(ptr->second.data);
 			bind[i].buffer_type = (enum_field_types)ptr->second.type;
 			bind[i].buffer_length = ptr->second.size;
@@ -300,5 +299,76 @@ namespace LX {
 		}
 		return  mysql_affected_rows(mysql);
 		
+	}
+	int LXMysql::UpdateBin(XDATA kv, string table, string where)
+	{
+		if (!mysql||kv.empty()||table.empty()) return -1;
+
+		string sql;
+
+		sql = "update `";
+		sql += table;
+		sql += "` set ";
+		
+		int i = 0;
+		//绑定字段
+		MYSQL_BIND bind[256] = { 0 };
+		for (auto ptr = kv.begin(); ptr != kv.end(); ptr++) {
+			sql += "`";
+			sql += ptr->first;
+			sql += "` =";
+
+			sql += "?,";
+			bind[i].buffer = (char*)(ptr->second.data);
+			bind[i].buffer_type = (enum_field_types)ptr->second.type;
+			bind[i].buffer_length = ptr->second.size;
+			i++;
+		}
+		sql[sql.size() - 1] = ' ';
+		sql += " ";
+		sql += where;
+
+
+		MYSQL_STMT* stmt = mysql_stmt_init(mysql);
+		if (!stmt) {
+			mysql_stmt_close(stmt);
+			cerr << "mysql_stmt_init failed!" << mysql_error(mysql);
+			return -1;
+		}
+		if (mysql_stmt_prepare(stmt, sql.c_str(), sql.length()) != 0) {
+			mysql_stmt_close(stmt);
+			cerr << "mysql_stmt_prepare" << mysql_error(mysql);
+			return -1;
+		}
+		if (mysql_stmt_bind_param(stmt, bind) != 0) {
+			mysql_stmt_close(stmt);
+			cerr << "mysql_stmt_bind_param" << mysql_stmt_error(stmt);
+			return -1;
+		}
+		if (mysql_stmt_execute(stmt) != 0) {
+			mysql_stmt_close(stmt);
+			cerr << "mysql_stmt_execute" << mysql_stmt_error(stmt);
+			return -1;
+		}
+		//清理stmt空间
+		mysql_stmt_close(stmt);
+
+		return  mysql_affected_rows(mysql);
+	}
+	bool LXMysql::StartTransaction()
+	{
+		return Query("set autocommit=0");
+	}
+	bool LXMysql::StopTransaction()
+	{
+		return Query("set autocommit=1");
+	}
+	bool LXMysql::Commit()
+	{
+		return Query("commit");
+	}
+	bool LXMysql::Rollback()
+	{
+		return Query("rollback");
 	}
 }

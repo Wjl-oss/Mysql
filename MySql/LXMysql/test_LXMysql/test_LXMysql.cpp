@@ -74,7 +74,7 @@ int main()
 
 #if 0
     //插入二进制数据
-    data1["name"] = "test.png";
+    data1["name"] = "test2.png";
     LXData binaryFile;
     binaryFile.LoadFile("E:\\Project\\MySql\\LXMysql\\test_LXMysql\\images\\test.png");
     data1["data"] = binaryFile;
@@ -85,11 +85,47 @@ int main()
     binaryFile.Drop();
 #endif
 
-#if 1
-    //修改数据
+#if 0
+    //修改一般数据
     XDATA update;
     update["name"] = "wangzzzz";
     cout << my.Update(update, table, "where id = 1") << endl;
+
+#endif
+
+#if 0
+    //修改二进制数据
+    XDATA update2;
+    LXData file2;
+    file2.LoadFile("E:\\Project\\MySql\\LXMysql\\test_LXMysql\\images\\test2.bmp");
+    update2["data"] = file2;
+    cout << my.UpdateBin(update2, table, "where id = 2") << endl;
+    file2.Drop();
+#endif
+
+
+#if 1
+    //测试事务
+    //使用事务插入多条数据
+    XDATA data3;
+
+    data3["name"] = "trans001";
+    data3["size"] = "1";
+    my.StartTransaction();
+    my.Insert(data3, table);
+    my.Insert(data3, table);
+    my.Insert(data3, table);
+    my.Rollback();//回滚
+
+    data3["name"] = "trans002";
+    data3["size"] = "3";
+    my.Insert(data3, table);
+    data3["name"] = "trans003";
+    data3["size"] = "5";
+    my.Insert(data3, table);
+    my.Commit();
+    my.StopTransaction();
+
 
 #endif
 
@@ -102,7 +138,9 @@ int main()
     while (1) {
         auto row = my.FetchRow();//从结果集中获取一行文本数据
         if (row.size() == 0) break;
+
         row[3].saveFile(row[1].data);//保存文件 文件会输出到该项目的工作目录下 目前会保存到E:\Project\Lib\mysql-8.1.0-winx64\lib
+        
         for (int i = 0; i < row.size(); i++) {
              if (row[i].data)
                 cout << row[i].data << " "; 
