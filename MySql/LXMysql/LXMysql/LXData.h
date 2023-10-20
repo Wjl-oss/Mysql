@@ -1,5 +1,6 @@
 #pragma once
 #include<map>
+#include<vector>
 #include<string>
 #ifdef LXMYSQL_EXPORTS
 //动态链接库项目调用
@@ -8,6 +9,7 @@
 //测试程序调用
 #define LXAPI __declspec(dllimport)
 #endif // LXMYSQL_EXPORTS
+
 namespace LX {
 
 	enum LX_OPT {
@@ -96,6 +98,7 @@ namespace LX {
 		LX_TYPE_STRING = 254,
 		LX_TYPE_GEOMETRY = 255
 	};
+	
 	struct LXAPI LXData
 	{
 		const char* data = 0;//存储的可能是二进制、整形、字符型
@@ -107,11 +110,13 @@ namespace LX {
 		//释放LoadFile申请的data空间
 		void Drop();
 		int size = 0;
+		std::string UTF8ToGBK();
+		std::string GBKToUTF8();
 		FIELD_TYPE type;//文件类型
 	};
 
 	//插入和更新的数据结构
 	typedef std::map < std::string, LXData > XDATA;
-
+	typedef std::vector<std::vector<LXData> > XROWS;//存储多行查询到的结果
 }
 

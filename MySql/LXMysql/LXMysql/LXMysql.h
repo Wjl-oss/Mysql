@@ -15,6 +15,7 @@ using std::string;
 */
 struct MYSQL;
 struct MYSQL_RES;
+//所有函数都是线程非安全的
 namespace LX {
 
 	
@@ -65,6 +66,9 @@ namespace LX {
 		bool StopTransaction();
 		bool Commit();
 		bool Rollback();
+
+		//简易接口 返回select数据结果，每次调用清理上一次的结果集
+		XROWS GetResult(const char* sql);
 
 	protected:
 		MYSQL* mysql = 0;

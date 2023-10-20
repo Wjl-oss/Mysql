@@ -102,9 +102,7 @@ int main()
     cout << my.UpdateBin(update2, table, "where id = 2") << endl;
     file2.Drop();
 #endif
-
-
-#if 1
+#if 0
     //测试事务
     //使用事务插入多条数据
     XDATA data3;
@@ -129,7 +127,90 @@ int main()
 
 #endif
 
-#if 1
+
+#if 0
+    //测试utf8  该测试项要完成跨平台
+   //windows下在cmd控制台显示中文字符是需要使用gbk编码的
+   //linux支持直接utf8编码显示，所以不需要转
+    cout << "开始测试字utf-8编码符集" << endl;
+    sql = "CREATE TABLE IF NOT EXISTS `t_utf8` ( \
+        `id` int auto_increment,\
+        `name` varchar(1024) character set utf8 collate utf8_bin,\
+        PRIMARY KEY(`id`)\
+        )ENGINE=InnoDB;";
+    if (!my.Query(sql.c_str())) {
+        cout << "CREATE TABLE t_utf8 failed !" << endl;
+    }
+    my.Query("truncate t_utf8");
+    
+    my.Query("set names utf8");//指定mysql处理的字符集
+    {
+        table = "t_utf8";
+        XDATA data;
+        data["name"] = u8"测试的UTF中文";
+        my.Insert(data, table);
+    }
+
+    my.Query("select * from t_utf8");
+    my.StoreResult();
+    while (1) {
+        auto row = my.FetchRow();
+        if (row.size() == 0) break;
+#ifdef _WIN32
+        cout << "id = " << row[0].data << " name =  " << row[1].UTF8ToGBK() << endl;
+#else
+        cout << "id = " << row[0].data << " name =  " << row[1] << endl;
+#endif
+    }
+    my.FreeResult();
+
+#endif
+
+#if 0
+    //插入gbk的数据 该测试项要完成跨平台
+    cout << "开始测试gbk编码字符" << endl;
+    sql = "CREATE TABLE IF NOT EXISTS `t_gbk` (\
+        `id` int auto_increment,\
+        `name` varchar(1024) character set gbk collate gbk_bin,\
+        PRIMARY KEY(`id`)\
+        )ENGINE=InnoDB;";
+    if (!my.Query(sql.c_str())) {
+        cout<< "CREATE TABLE t_gbk failed !" << endl;
+    }
+    my.Query("truncate t_gbk");
+
+    my.Query("set names gbk");//指定mysql处理的字符集
+    {
+        table = "t_gbk";
+        XDATA data;
+        //data["name"] = "测试的gbk中文";
+        LXData temp = u8"测试的gbk中文9999";
+        string gbk = temp.UTF8ToGBK();
+        data["name"] = gbk.c_str();//windows下默认是u8编码 windows下的mysql转为gbk编码插入不会乱码是因为即使cpp是utf8编码，但是由于编译器行文对中文还是会采用两个字节编译，所以不会乱码
+        //linux下文本默认是utf8编码，且编译器在编译的时候不会做转换，中文也是按照utf8编码，所以mysql连接用gbk编码就会乱码
+        //一定要注意不同IDE环境和操作系统环境下的源代码编码格式以及编译器行文带来的乱码现象。
+        my.Insert(data, table);
+    }
+
+    //读取gbk编码的数据
+    //Windows下gbk数据可以在cmd、powershell下显示，但在linux下不能正确显示 所以针对linux下要特殊处理
+    my.Query("select * from t_gbk");
+    my.StoreResult();
+    while (1) {
+        auto row = my.FetchRow();
+        if (row.size() == 0) break;
+#ifdef _WIN32
+        cout << "id = " << row[0].data << " name =  " << row[1].data << endl;
+#else
+        cout << "id = " << row[0].data << " name =  " << row[1].GBKToUTF8() << endl;
+#endif
+    }
+    my.FreeResult();
+    
+#endif
+
+#if 0
+    
     //获取结果集
     sql = "select * from t_video";
     my.Query(sql.c_str());
@@ -155,7 +236,34 @@ int main()
     //my.FreeResult();
 #endif
 
-   
+    XROWS rows = my.GetResult("select * from t_video");
+    for (int i = 0; i < rows.size(); i++) {
+        auto row = rows[i];
+        for (int i = 0; i < row.size(); i++) {
+            if (!row[i].data) {
+                cout << "[NULL],";
+                continue;
+            }
+            switch (row[i].type)
+            {
+            case LX_TYPE_BLOB:
+                cout << "[Blob],";
+                break;
+
+            case LX_TYPE_STRING:
+            case LX_TYPE_LONG:
+                cout << row[i].data<<",";//为什么不需要强转
+                break;
+            default:
+                cout << row[i].data<<",";
+                break;
+            }
+
+        }
+        cout << endl;
+    }
+
+   //关于表锁与行锁部分就不再封装演示
 
     my.Close();
     

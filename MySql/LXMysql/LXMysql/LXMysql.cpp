@@ -6,6 +6,9 @@ using std::cout;
 using std::endl;
 using std::cerr;
 namespace LX {
+	int add() {
+		return 19;
+	}
 	bool LXMysql::Init()
 	{
 		Close();//清理上一次的连接资源
@@ -14,6 +17,7 @@ namespace LX {
 		if (!mysql) {
 			cerr << "mysql_init failed!" << endl;
 		}
+		add();
 		return true;
 	}
 
@@ -137,8 +141,10 @@ namespace LX {
 		int num = mysql_num_fields(result);
 		for (int i = 0; i < num; i++) {
 			LXData data;
+			//这里是值拷贝,拷贝的是指针
 			data.data = row[i];//数据是由mysql开辟的空间 所以获取结果集后需要释放结果集
 			data.size = lens[i];
+			data.type = (FIELD_TYPE)(mysql_fetch_field_direct(result, i))->type;
 			re.push_back(data);
 		}
 		return re;
@@ -370,5 +376,25 @@ namespace LX {
 	bool LXMysql::Rollback()
 	{
 		return Query("rollback");
+	}
+	XROWS LXMysql::GetResult(const char* sql)
+	{
+		FreeResult();
+		XROWS rows;
+		if (!Query(sql))
+			return rows;
+		/*if (!UseResult()) 
+		*不能用UseResult，因为mysql_fetch_row获取的缓冲区返回的是指针地址，我们自定义FetchRow中完成内容的拷贝是值拷贝
+		* 所以若使用UseResult，上一次获取的rows的结果会被下一次的获取的row覆盖，因为mysql_use_result开辟的永远只有一块儿固定地址存放每次从服务器返回的结果
+		* 我们每次row存放的结果是地址，push进的也是地址，所以rows中的内容每次会被覆盖掉，从而结果乱码
+			return rows;*/
+		if (!StoreResult())
+			return rows;
+		while (1) {
+			auto row = FetchRow();
+			if (row.empty()) break;
+			rows.push_back(row);
+		}
+		return rows;
 	}
 }
